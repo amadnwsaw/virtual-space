@@ -174,7 +174,6 @@
         }
         .ai-suggest.visible{ display:block; }
         
-        /* 用戶下拉選單 CSS */
         #userDropdown {
             position: absolute;
             top: 60px; 
@@ -204,7 +203,6 @@
         }
         #userDropdown button:hover { background: rgba(66,133,244,0.06); }
 
-        /* 帳戶管理彈出視窗 CSS */
         #accountModal, #backdrop {
             position: fixed;
             top: 0;
@@ -245,7 +243,6 @@
         .modal-actions .btn-save { background: var(--brand); color: white; border: none; }
         .modal-actions .btn-cancel { background: var(--chip-bg); border: 1px solid var(--card-border); color: var(--text); }
         
-        /* 原始 CSS 略 */
         .search:focus-within{ box-shadow:0 12px 36px rgba(0,0,0,0.08); border-color:rgba(0,0,0,0.06); }
         .search input[type="text"]{
             flex:1;
@@ -339,8 +336,7 @@
         <div class="dot" aria-hidden="true"></div>
         <div class="logo">NovaSeek</div>
     </div>
-    <div id="authArea" aria-live="polite">
-        </div>
+    <div id="authArea" aria-live="polite"></div>
     <div id="userDropdown" role="menu" aria-hidden="true"></div> 
 </header>
 <div id="backdrop" aria-hidden="true"></div> 
@@ -386,9 +382,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
-    // ----------------------------------------------------
-    // Firebase & 環境設定
-    // ----------------------------------------------------
     const FIREBASE_CONFIG = {
         apiKey: "AIzaSyA7K4x1Di_xUaVt7MF08LfumJxc10dqa3c",
         authDomain: "sample-firebase-ai-app-df21b.firebaseapp.com",
@@ -400,13 +393,8 @@
     firebase.initializeApp(FIREBASE_CONFIG);
     const auth = firebase.auth();
     const db = firebase.firestore();
-
-    // 實際的認證提供者：使用 Google 登入來替代虛擬的 novaseek 登入
     const provider = new firebase.auth.GoogleAuthProvider(); 
 
-    // ----------------------------------------------------
-    // DOM 元素與狀態 (略)
-    // ----------------------------------------------------
     const authArea = document.getElementById('authArea');
     const userDropdown = document.getElementById('userDropdown');
     const accountModal = document.getElementById('accountModal');
@@ -426,9 +414,6 @@
     let currentSuggestList = [];
     let selectedSuggestIndex = -1;
 
-    // ----------------------------------------------------
-    // 工具函數 (略)
-    // ----------------------------------------------------
     function escapeHtml(str){
         if(!str) return '';
         return String(str)
@@ -455,19 +440,12 @@
         return '剛剛';
     }
     
-    // ----------------------------------------------------
-    // 登入、登出與帳戶管理 (實際 Firebase 呼叫)
-    // ----------------------------------------------------
-
     function toggleDropdown(show) {
         userDropdown.classList.toggle('visible', show);
         userDropdown.setAttribute('aria-hidden', !show);
     }
 
-    // *** 新增：實際觸發 Firebase 登入重定向的函數 ***
     function handleLogin() {
-        // 實際的 Firebase 登入流程：使用重定向 (Redirect)
-        // 這會將使用者導向 Google 登入頁面
         auth.signInWithRedirect(provider)
         .catch(error => {
             console.error("Redirect login start failed:", error);
@@ -475,11 +453,9 @@
         });
     }
 
-    // *** 修改：實際觸發 Firebase 登出的函數 ***
     async function handleLogout() {
         try {
              await auth.signOut();
-             // onAuthStateChanged 會自動更新 UI
              toggleDropdown(false);
         } catch (error) {
             console.error("登出失敗:", error);
@@ -487,10 +463,7 @@
         }
     }
     
-    // 帳戶修改功能 (在純前端環境中為模擬功能)
     function showAccountModal() {
-        // 保持不變，因為 Firebase 帳戶資訊修改涉及敏感操作，需要 Re-authentication
-        // 我們這裡只保留前端 UI 流程
         backdrop.classList.add('visible');
         accountModal.classList.add('visible');
         accountModal.setAttribute('aria-hidden', 'false');
@@ -529,11 +502,9 @@
         const newPassword = document.getElementById('modalPassword').value.trim();
 
         if (newName && newName !== currentUser.displayName) {
-            // 實際應呼叫 user.updateProfile({ displayName: newName })
             currentUser.displayName = newName;
         }
         if (newPassword) {
-            // 實際應呼叫 user.updatePassword(newPassword) 並處理 Re-authentication
             alert(`密碼已模擬更新！(實際操作需 Re-authentication)`);
         }
 
@@ -548,7 +519,6 @@
         userDropdown.innerHTML = ''; 
 
         if(currentUser){
-            // 1. 渲染頭像徽章
             const badge = document.createElement('div');
             badge.className = 'user-badge';
             badge.id = 'userBadge'; 
@@ -560,7 +530,6 @@
             });
             authArea.appendChild(badge);
 
-            // 2. 渲染下拉選單內容
             userDropdown.innerHTML = `
                 <div class="info">
                     <strong>${escapeHtml(currentUser.displayName || '未設定名稱')}</strong>
@@ -571,7 +540,6 @@
             `;
 
         } else {
-            // 渲染登入按鈕
             const btn = document.createElement('button');
             btn.id = 'authBtn2';
             btn.textContent = '登入';
@@ -579,64 +547,67 @@
             btn.style.width = 'auto';
             btn.style.borderRadius = '12px';
             btn.style.padding = '8px 12px';
-            // *** 使用新的 handleLogin 函數 ***
             btn.addEventListener('click', handleLogin); 
             authArea.appendChild(btn);
         }
         updateRecentListUI();
     }
     
-    // ----------------------------------------------------
-    // 實際的 Firebase 狀態管理 (替換舊的 setupAuthStateListener)
-    // ----------------------------------------------------
-
-    // 1. 處理重定向回來的結果
     async function handleRedirectResult() {
         try {
-            // 嘗試獲取重定向結果。這是登入資訊安全回傳的機制。
             const result = await auth.getRedirectResult();
             if (result.user) {
-                console.log("成功從重定向獲取登入結果:", result.user.uid);
-                // 成功登入後，onAuthStateChanged 會在稍後處理狀態更新。
+                currentUser = {
+                    email: result.user.email,
+                    displayName: result.user.displayName || result.user.email.split('@')[0], 
+                    uid: result.user.uid
+                };
+                localStorage.setItem('novaseek_user', JSON.stringify(currentUser));
+                renderAuthUI();
                 
-                // 清理 URL 參數（移除 Firebase 登入後產生的 hash 或 query 參數）
                 if (window.history.replaceState) {
                     const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
                     window.history.replaceState({path:cleanUrl},'',cleanUrl);
                 }
             }
         } catch (error) {
-            // 處理重定向時發生的錯誤
-            console.error("重定向登入處理失敗:", error);
-            alert("登入處理失敗：" + error.message);
+            console.error("Redirect result error:", error);
         }
     }
 
-    // 2. 監聽全域登入狀態 (最可靠的方式，當狀態改變時會被觸發)
     function setupRealtimeAuthStateListener() {
         auth.onAuthStateChanged(user => {
             if (user) {
-                // 使用者已登入。使用 Firebase 提供的最新 user 物件。
-                currentUser = {
-                    email: user.email,
-                    displayName: user.displayName || user.email.split('@')[0], 
-                    uid: user.uid
-                };
-                // 將資訊快取到 localStorage
-                localStorage.setItem('novaseek_user', JSON.stringify(currentUser));
+                if (!currentUser || currentUser.uid !== user.uid) {
+                    currentUser = {
+                        email: user.email,
+                        displayName: user.displayName || user.email.split('@')[0], 
+                        uid: user.uid
+                    };
+                    localStorage.setItem('novaseek_user', JSON.stringify(currentUser));
+                    renderAuthUI();
+                }
             } else {
-                // 使用者已登出
                 currentUser = null;
                 localStorage.removeItem('novaseek_user');
+                renderAuthUI();
             }
-            renderAuthUI();
         });
     }
 
+    function loadUserFromStorage() {
+        const su = localStorage.getItem('novaseek_user');
+        if (su) {
+            try {
+                currentUser = JSON.parse(su);
+                renderAuthUI();
+            } catch (e) {
+                currentUser = null;
+                localStorage.removeItem('novaseek_user');
+            }
+        }
+    }
 
-    // ----------------------------------------------------
-    // AI 建議邏輯 (略)
-    // ----------------------------------------------------
     function generateLocalAISuggestions(query){
         if(!query) return [];
         const base = query.trim();
@@ -662,7 +633,6 @@
         const scores = new Map(); 
         const MAX_RESULTS = 10;
         
-        // 1. 靜態知識庫加權
         GLOBAL_KNOWLEDGE_BASE.forEach(item => {
             const lowerTerm = item.term.toLowerCase();
             if (lowerTerm.startsWith(searchPrefix)) {
@@ -670,7 +640,6 @@
             }
         });
 
-        // 2. 動態熱門度加權 (localTrendingCounts)
         Object.entries(localTrendingCounts).forEach(([term, count]) => {
             const lowerTerm = term.toLowerCase();
             if (lowerTerm.startsWith(searchPrefix)) {
@@ -679,7 +648,6 @@
             }
         });
         
-        // 3. 個人化歷史紀錄加權
         const localRecent = JSON.parse(localStorage.getItem('novaseek_local_searches') || '[]');
         const uniqueRecent = [...new Map(localRecent.map(item => [item.q, item])).values()]; 
         uniqueRecent.slice(0, 20).forEach((item, index) => { 
@@ -691,7 +659,6 @@
             }
         });
         
-        // 4. 基礎模板補充
         let suggestions = Array.from(scores.keys());
         if (suggestions.length < MAX_RESULTS) {
             const localTemplates = generateLocalAISuggestions(query);
@@ -706,7 +673,6 @@
             });
         }
 
-        // 5. 排序與篩選
         const finalSuggestions = Array.from(scores.entries())
             .sort(([, scoreA], [, scoreB]) => scoreB - scoreA) 
             .map(([term]) => term)
@@ -763,9 +729,6 @@
         aiSuggest.style.display = 'none';
     }
 
-    // ----------------------------------------------------
-    // 語音搜尋邏輯 (略)
-    // ----------------------------------------------------
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     function startVoiceSearch() {
@@ -814,9 +777,6 @@
     }
     btnMic.addEventListener('click', startVoiceSearch);
 
-    // ----------------------------------------------------
-    // 搜尋與數據記錄 (略)
-    // ----------------------------------------------------
     function redirectToSearch(q){
         if(!q || !q.trim()) return;
         const query = q.trim();
@@ -828,26 +788,20 @@
 
     async function recordSearch(query){
         try{
-            // 寫入 novaseek_local_searches (本地紀錄)
             const localList = JSON.parse(localStorage.getItem('novaseek_local_searches') || '[]');
             localList.unshift({ q: query, ts: Date.now() });
             localList.splice(200);
             localStorage.setItem('novaseek_local_searches', JSON.stringify(localList));
-        }catch(e){
-            // console.warn('local save fail', e);
-        }
+        }catch(e){}
         if(currentUser && currentUser.email){
             try{
-                // 寫入 Firestore (遠端紀錄)
                 const docRef = db.collection('searchRecords').doc();
                 await docRef.set({
                     q: query,
                     uid: currentUser.email,
                     ts: firebase.firestore.FieldValue.serverTimestamp()
                 });
-            }catch(e){
-                // console.error('Firestore record fail', e);
-            }
+            }catch(e){}
         }
         updateTrendingCounts(query);
     }
@@ -956,9 +910,6 @@
     }
     btnSearch.addEventListener('click', handleSearch);
 
-    // ----------------------------------------------------
-    // 事件監聽與鍵盤導航 (略)
-    // ----------------------------------------------------
     let suggestTimer = null;
     searchInput.addEventListener('input', (e) => {
         const v = e.target.value.trim();
@@ -1009,19 +960,15 @@
         }
     });
 
-    // 關閉下拉選單和模態視窗的通用處理
     document.addEventListener('click', (e) => {
-        // 點擊區域外部時關閉下拉選單
         if (userDropdown.classList.contains('visible') && !authArea.contains(e.target) && !userDropdown.contains(e.target)) {
             toggleDropdown(false);
         }
-        // 點擊遮罩時關閉模態視窗
         if (e.target === backdrop) {
             hideAccountModal();
         }
     });
 
-    // ESC 鍵關閉模態視窗或下拉選單
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             if (accountModal.classList.contains('visible')) {
@@ -1034,13 +981,9 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         loadModePreference();
-
-        // 1. 處理重定向結果 (這必須在狀態監聽之前或同時執行)
-        handleRedirectResult(); 
-
-        // 2. 啟動狀態監聽 (這是狀態的主體)
+        loadUserFromStorage();
         setupRealtimeAuthStateListener();
-
+        handleRedirectResult(); 
         renderInitialChips(); 
         updateTrendingUI();
     });
